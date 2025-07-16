@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
@@ -56,6 +58,12 @@ const ChartIcon = () => (
 const MapIcon = () => (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+  </svg>
+);
+
+const BackIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
   </svg>
 );
 
@@ -232,14 +240,22 @@ const ComparablesPage: React.FC = () => {
         >
           <div className="glass-white rounded-3xl p-8 shadow-2xl">
             <div className="flex items-center justify-center mb-4">
+              <motion.a
+                href="/"
+                className="flex items-center mr-6 text-gray-600 hover:text-gray-800 transition-colors"
+                whileHover={{ x: -5 }}
+              >
+                <BackIcon />
+                <span className="ml-2">Back to Home</span>
+              </motion.a>
               <BuildingIcon />
               <h1 className="text-4xl font-bold text-gray-800 ml-3">
-                Starboard Comparables
+                Find Comparables
               </h1>
             </div>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Industrial Property Analytics Platform - Find the best comparable properties 
-              with AI-powered analysis and beautiful visualizations
+              Enter your property details below to discover the most similar industrial properties 
+              with detailed scoring and interactive visualizations
             </p>
             
             {/* Backend Status */}
@@ -282,7 +298,7 @@ const ComparablesPage: React.FC = () => {
                     step="0.000001"
                     value={propertyData.latitude}
                     onChange={(e) => setPropertyData({...propertyData, latitude: parseFloat(e.target.value)})}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 input-glow"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                     required
                   />
                 </div>
@@ -297,7 +313,7 @@ const ComparablesPage: React.FC = () => {
                     step="0.000001"
                     value={propertyData.longitude}
                     onChange={(e) => setPropertyData({...propertyData, longitude: parseFloat(e.target.value)})}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 input-glow"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                     required
                   />
                 </div>
@@ -312,7 +328,7 @@ const ComparablesPage: React.FC = () => {
                     min="100"
                     value={propertyData.square_feet}
                     onChange={(e) => setPropertyData({...propertyData, square_feet: parseInt(e.target.value)})}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 input-glow"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                     required
                   />
                 </div>
@@ -328,7 +344,7 @@ const ComparablesPage: React.FC = () => {
                     max="2024"
                     value={propertyData.year_built}
                     onChange={(e) => setPropertyData({...propertyData, year_built: parseInt(e.target.value)})}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 input-glow"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                     required
                   />
                 </div>
@@ -360,7 +376,7 @@ const ComparablesPage: React.FC = () => {
                   className={`w-full py-4 px-6 rounded-lg font-semibold text-white transition-all duration-200 ${
                     loading || backendStatus !== 'connected'
                       ? 'bg-gray-400 cursor-not-allowed'
-                      : 'btn-primary shadow-lg'
+                      : 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-lg'
                   }`}
                   whileHover={loading ? {} : { scale: 1.02 }}
                   whileTap={loading ? {} : { scale: 0.98 }}

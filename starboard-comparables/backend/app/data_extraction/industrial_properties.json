@@ -1,0 +1,29 @@
+[
+  {
+    "id": "123",
+    "address": "123 Industrial Ave",
+    "square_feet": 5100,
+    "year_built": 1982,
+    "zoning": "M1",
+    "latitude": 41.8781,
+    "longitude": -87.6298
+  },
+  {
+    "id": "456",
+    "address": "456 Manufacturing Blvd",
+    "square_feet": 4800,
+    "year_built": 1985,
+    "zoning": "M2",
+    "latitude": 41.8785,
+    "longitude": -87.6300
+  },
+  {
+    "id": "789",
+    "address": "789 Factory Row",
+    "square_feet": 6200,
+    "year_built": 1978,
+    "zoning": "I-1",
+    "latitude": 41.8790,
+    "longitude": -87.6295
+  }
+]

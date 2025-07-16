@@ -1,5 +1,6 @@
 
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Any
 import json
@@ -7,6 +8,15 @@ import os
 import uvicorn
 
 app = FastAPI()
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 DATA_PATH = os.path.join(os.path.dirname(__file__), "app/data_extraction/industrial_properties.json")
 OUTLIER_PATH = os.path.join(os.path.dirname(__file__), "app/data_extraction/outlier_flags.json")

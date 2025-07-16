@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Starboard Comparables - Enhanced Interactive Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://unpkg.com/chart.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .dark-glass {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .spinner {
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 2px solid #3b82f6;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .chart-container {
+            position: relative;
+            height: 350px;
+            width: 100%;
+        }
+        .floating {
+            animation: float 6s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        .glow-on-hover {
+            transition: all 0.3s ease;
+        }
+        .glow-on-hover:hover {
+            box-shadow: 0 0 30px rgba(102, 126, 234, 0.6);
+            transform: translateY(-5px);
+        }
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            border-radius: 4px;
+            transition: width 2s ease-in-out;
+        }
+        .pulse-dot {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .slide-in {
+            animation: slideIn 0.5s ease-out;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .gradient-border {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            padding: 2px;
+            border-radius: 12px;
+        }
+        .gradient-border-inner {
+            background: white;
+            border-radius: 10px;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    animation: {
+                        'bounce-slow': 'bounce 3s infinite',
+                        'pulse-slow': 'pulse 3s infinite',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <!-- Animated Header -->
+        <div class="text-center mb-12">
+            <div class="glass rounded-3xl p-8 shadow-2xl glow-on-hover">
+                <div class="flex items-center justify-center mb-6">
+                    <div class="text-6xl mr-4 floating">🏭</div>
+                    <div>
+                        <h1 class="text-5xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                            Starboard Comparables
+                        </h1>
+                        <div class="h-1 w-32 bg-gradient-to-r from-blue-500 to-purple-500 mx-auto mt-2 rounded-full"></div>
+                    </div>
+                </div>
+                <p class="text-xl text-gray-600 max-w-4xl mx-auto mb-6">
+                    🚀 Next-Generation Property Analytics Platform with AI-Powered Comparable Analysis
+                </p>
+                <div class="flex items-center justify-center space-x-3 mb-4">
+                    <div id="status-indicator" class="w-4 h-4 rounded-full bg-yellow-500 pulse-dot"></div>
+                    <span id="status-text" class="text-sm text-gray-600 font-medium">Initializing Backend Connection...</span>
+                </div>
+                <div class="flex flex-wrap justify-center gap-4 text-sm text-gray-500">
+                    <span class="flex items-center"><span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>FastAPI Backend</span>
+                    <span class="flex items-center"><span class="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>Interactive Charts</span>
+                    <span class="flex items-center"><span class="w-2 h-2 bg-purple-500 rounded-full mr-2"></span>Live Maps</span>
+                    <span class="flex items-center"><span class="w-2 h-2 bg-orange-500 rounded-full mr-2"></span>Real-time Analytics</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 xl:grid-cols-4 gap-8">
+            <!-- Enhanced Input Panel -->
+            <div class="xl:col-span-1">
+                <div class="glass rounded-2xl p-6 shadow-xl glow-on-hover">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                        <svg class="w-7 h-7 mr-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        Property Search
+                    </h2>
+
+                    <form id="search-form" class="space-y-5">
+                        <div class="gradient-border">
+                            <div class="gradient-border-inner p-4">
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">📍 Latitude</label>
+                                <input type="number" id="latitude" step="0.000001" value="41.8781" 
+                                       class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" required>
+                            </div>
+                        </div>
+
+                        <div class="gradient-border">
+                            <div class="gradient-border-inner p-4">
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">📍 Longitude</label>
+                                <input type="number" id="longitude" step="0.000001" value="-87.6298" 
+                                       class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" required>
+                            </div>
+                        </div>
+
+                        <div class="gradient-border">
+                            <div class="gradient-border-inner p-4">
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">📐 Square Feet</label>
+                                <input type="number" id="square_feet" min="100" value="5100" 
+                                       class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" required>
+                            </div>
+                        </div>
+
+                        <div class="gradient-border">
+                            <div class="gradient-border-inner p-4">
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">📅 Year Built</label>
+                                <input type="number" id="year_built" min="1800" max="2024" value="1982" 
+                                       class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" required>
+                            </div>
+                        </div>
+
+                        <div class="gradient-border">
+                            <div class="gradient-border-inner p-4">
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">🏙️ Zoning</label>
+                                <select id="zoning" class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" required>
+                                    <option value="M1">M1 - Manufacturing</option>
+                                    <option value="M2">M2 - Manufacturing</option>
+                                    <option value="M3">M3 - Manufacturing</option>
+                                    <option value="I-1">I-1 - Industrial</option>
+                                    <option value="I-2">I-2 - Industrial</option>
+                                    <option value="C1">C1 - Commercial</option>
+                                    <option value="C2">C2 - Commercial</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button type="submit" id="search-btn" 
+                                class="w-full py-4 px-6 rounded-xl font-bold text-white bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600 hover:from-blue-600 hover:via-purple-600 hover:to-blue-700 transition-all duration-300 shadow-lg transform hover:scale-105 hover:shadow-2xl">
+                            <span class="flex items-center justify-center">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                </svg>
+                                Find Comparable Properties
+                            </span>
+                        </button>
+                    </form>
+
+                    <div id="error-message" class="hidden mt-4 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-red-700 text-sm font-medium"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enhanced Results Panel -->
+            <div class="xl:col-span-3">
+                <div class="glass rounded-2xl p-6 shadow-xl min-h-[700px] glow-on-hover">
+                    <!-- Empty State -->
+                    <div id="empty-state" class="flex flex-col items-center justify-center h-full text-center py-20">
+                        <div class="text-8xl mb-8 floating">🎯</div>
+                        <h3 class="text-3xl font-bold text-gray-700 mb-4">Ready to Discover Comparables</h3>
+                        <p class="text-gray-500 max-w-md text-lg leading-relaxed">
+                            Enter your property details to unleash our AI-powered comparable analysis with 
+                            beautiful visualizations and interactive insights.
+                        </p>
+                        <div class="mt-8 flex space-x-4">
+                            <div class="flex flex-col items-center">
+                                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-2">
+                                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                    </svg>
+                                </div>
+                                <span class="text-sm text-gray-600">Analytics</span>
+                            </div>
+                            <div class="flex flex-col items-center">
+                                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-2">
+                                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+                                    </svg>
+                                </div>
+                                <span class="text-sm text-gray-600">Maps</span>
+                            </div>
+                            <div class="flex flex-col items-center">
+                                <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-2">
+                                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                    </svg>
+                                </div>
+                                <span class="text-sm text-gray-600">AI Scoring</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Loading State -->
+                    <div id="loading-state" class="hidden flex flex-col items-center justify-center h-full py-20">
+                        <div class="relative">
+                            <div class="w-16 h-16 border-4 border-blue-200 rounded-full animate-spin"></div>
+                            <div class="w-16 h-16 border-4 border-blue-500 rounded-full animate-spin absolute top-0 left-0" style="border-bottom-color: transparent; border-left-color: transparent;"></div>
+                        </div>
+                        <div class="mt-6 text-center">
+                            <h3 class="text-xl font-semibold text-gray-700 mb-2">🔍 Analyzing Properties</h3>
+                            <p class="text-gray-500">Our AI is finding the best comparable properties...</p>
+                            <div class="mt-4 w-64 bg-gray-200 rounded-full h-2 mx-auto">
+                                <div class="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full animate-pulse" style="width: 70%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Results Content -->
+                    <div id="results-container" class="hidden">
+                        <!-- Results Header -->
+                        <div class="flex justify-between items-center mb-8">
+                            <div>
+                                <h3 class="text-3xl font-bold text-gray-800 flex items-center">
+                                    <span class="text-4xl mr-3">🎯</span>
+                                    Comparable Properties
+                                </h3>
+                                <p id="results-count" class="text-gray-600 text-lg"></p>
+                            </div>
+                            <div id="results-badge" class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-full font-bold text-lg shadow-lg">
+                            </div>
+                        </div>
+
+                        <!-- Enhanced Tabs -->
+                        <div class="flex space-x-2 bg-gray-100 rounded-xl p-2 mb-8">
+                            <button id="tab-overview" class="flex-1 flex items-center justify-center px-6 py-4 rounded-lg font-semibold transition-all duration-300 bg-white text-blue-600 shadow-lg transform">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                                </svg>
+                                Overview
+                            </button>
+                            <button id="tab-charts" class="flex-1 flex items-center justify-center px-6 py-4 rounded-lg font-semibold transition-all duration-300 text-gray-600 hover:text-gray-800 hover:bg-gray-50">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                </svg>
+                                Analytics Dashboard
+                            </button>
+                            <button id="tab-map" class="flex-1 flex items-center justify-center px-6 py-4 rounded-lg font-semibold transition-all duration-300 text-gray-600 hover:text-gray-800 hover:bg-gray-50">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+                                </svg>
+                                Interactive Map
+                            </button>
+                        </div>
+
+                        <!-- Tab Content Areas -->
+                        <div id="content-overview" class="tab-content">
+                            <div id="overview-results" class="space-y-6 max-h-96 overflow-y-auto pr-4">
+                                <!-- Results will be populated here -->
+                            </div>
+                        </div>
+
+                        <div id="content-charts" class="tab-content hidden">
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <div class="bg-white rounded-xl p-6 shadow-lg">
+                                    <h4 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                        <span class="text-2xl mr-2">📊</span>
+                                        Compatibility Scores
+                                    </h4>
+                                    <div class="chart-container">
+                                        <canvas id="scores-chart"></canvas>
+                                    </div>
+                                </div>
+                                <div class="bg-white rounded-xl p-6 shadow-lg">
+                                    <h4 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                        <span class="text-2xl mr-2">📈</span>
+                                        Score Factors
+                                    </h4>
+                                    <div class="chart-container">
+                                        <canvas id="factors-chart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="content-map" class="tab-content hidden">
+                            <div class="bg-white rounded-xl overflow-hidden shadow-lg">
+                                <div class="p-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+                                    <h4 class="text-lg font-semibold flex items-center">
+                                        <span class="text-2xl mr-2">🗺️</span>
+                                        Property Locations
+                                    </h4>
+                                    <p class="text-blue-100 text-sm">Interactive map showing your property and comparables</p>
+                                </div>
+                                <div id="map" class="h-96"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let comparables = [];
+        let map = null;
+        let scoresChart = null;
+        let factorsChart = null;
+        let backendConnected = false;
+
+        // Enhanced backend status checking
+        async function checkBackend() {
+            try {
+                const response = await axios.get('http://localhost:8000/properties', { timeout: 5000 });
+                backendConnected = true;
+                document.getElementById('status-indicator').className = 'w-4 h-4 rounded-full bg-green-500 animate-bounce';
+                document.getElementById('status-text').textContent = '✅ Backend Connected & Ready';
+                document.getElementById('status-text').className = 'text-sm text-green-600 font-medium';
+            } catch (error) {
+                backendConnected = false;
+                document.getElementById('status-indicator').className = 'w-4 h-4 rounded-full bg-red-500 pulse-dot';
+                document.getElementById('status-text').textContent = '❌ Backend Offline - Check Connection';
+                document.getElementById('status-text').className = 'text-sm text-red-600 font-medium';
+            }
+        }
+
+        // Enhanced score color system
+        function getScoreColor(score) {
+            if (score >= 0.9) return 'bg-gradient-to-r from-emerald-500 to-emerald-600';
+            if (score >= 0.8) return 'bg-gradient-to-r from-green-500 to-green-600';
+            if (score >= 0.7) return 'bg-gradient-to-r from-yellow-400 to-yellow-500';
+            if (score >= 0.6) return 'bg-gradient-to-r from-orange-400 to-orange-500';
+            return 'bg-gradient-to-r from-red-400 to-red-500';
+        }
+
+        function getScoreLabel(score) {
+            if (score >= 0.9) return '🏆 Excellent Match';
+            if (score >= 0.8) return '⭐ Very Good Match';
+            if (score >= 0.7) return '👍 Good Match';
+            if (score >= 0.6) return '👌 Fair Match';
+            return '⚠️ Poor Match';
+        }
+
+        // Enhanced overview rendering with animations
+        function renderOverview() {
+            const container = document.getElementById('overview-results');
+            container.innerHTML = '';
+
+            comparables.forEach((comp, index) => {
+                const scoreColor = getScoreColor(comp.score);
+                const scoreLabel = getScoreLabel(comp.score);
+                
+                const resultCard = document.createElement('div');
+                resultCard.className = 'bg-white rounded-xl p-6 shadow-lg border-l-4 border-blue-500 hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 slide-in glow-on-hover';
+                resultCard.style.animationDelay = `${index * 100}ms`;
+                
+                resultCard.innerHTML = `
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <div class="${scoreColor} inline-block px-4 py-2 rounded-full text-white text-sm font-bold mb-2 shadow-lg">
+                                #${index + 1} - ${(comp.score * 100).toFixed(1)}%
+                            </div>
+                            <div class="text-sm text-gray-500 font-medium">${scoreLabel}</div>
+                        </div>
+                        <div class="text-right">
+                            <h4 class="text-xl font-bold text-gray-800 mb-1">🏢 ${comp.property.address}</h4>
+                            <div class="text-sm text-gray-500">Property ID: ${comp.property.id || 'N/A'}</div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        <div class="bg-blue-50 rounded-lg p-3 text-center">
+                            <div class="text-2xl text-blue-600 mb-1">📐</div>
+                            <div class="text-xs text-gray-500 uppercase tracking-wide">Size</div>
+                            <div class="font-semibold text-gray-800">${comp.property.square_feet?.toLocaleString() || 'N/A'} sq ft</div>
+                        </div>
+                        <div class="bg-green-50 rounded-lg p-3 text-center">
+                            <div class="text-2xl text-green-600 mb-1">📅</div>
+                            <div class="text-xs text-gray-500 uppercase tracking-wide">Year Built</div>
+                            <div class="font-semibold text-gray-800">${comp.property.year_built}</div>
+                        </div>
+                        <div class="bg-purple-50 rounded-lg p-3 text-center">
+                            <div class="text-2xl text-purple-600 mb-1">🏙️</div>
+                            <div class="text-xs text-gray-500 uppercase tracking-wide">Zoning</div>
+                            <div class="font-semibold text-gray-800">${comp.property.zoning}</div>
+                        </div>
+                        <div class="bg-orange-50 rounded-lg p-3 text-center">
+                            <div class="text-2xl text-orange-600 mb-1">📍</div>
+                            <div class="text-xs text-gray-500 uppercase tracking-wide">Location</div>
+                            <div class="font-semibold text-gray-800 text-xs">${comp.property.latitude?.toFixed(3)}, ${comp.property.longitude?.toFixed(3)}</div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h5 class="text-sm font-bold text-gray-700 mb-4 flex items-center">
+                            <span class="text-lg mr-2">🎯</span>
+                            Score Breakdown Analysis
+                        </h5>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            ${Object.entries(comp.breakdown).map(([factor, score]) => `
+                                <div class="flex items-center justify-between bg-white rounded-lg p-3">
+                                    <span class="text-sm text-gray-700 font-medium capitalize">${factor.replace('_', ' ')}</span>
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-20 h-3 bg-gray-200 rounded-full overflow-hidden">
+                                            <div class="h-full bg-gradient-to-r from-blue-500 to-purple-600 transition-all duration-1000 rounded-full" 
+                                                 style="width: ${score * 100}%"></div>
+                                        </div>
+                                        <span class="text-sm font-bold text-gray-800 w-10">${(score * 100).toFixed(0)}%</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(resultCard);
+            });
+        }
+
+        // Enhanced chart rendering
+        function renderCharts() {
+            if (scoresChart) scoresChart.destroy();
+            if (factorsChart) factorsChart.destroy();
+
+            // Scores Chart
+            const scoresCtx = document.getElementById('scores-chart').getContext('2d');
+            scoresChart = new Chart(scoresCtx, {
+                type: 'bar',
+                data: {
+                    labels: comparables.map((_, index) => `Property #${index + 1}`),
+                    datasets: [{
+                        label: 'Compatibility Score (%)',
+                        data: comparables.map(comp => comp.score * 100),
+                        backgroundColor: comparables.map(comp => {
+                            const score = comp.score;
+                            if (score >= 0.9) return 'rgba(16, 185, 129, 0.8)';
+                            if (score >= 0.8) return 'rgba(59, 130, 246, 0.8)';
+                            if (score >= 0.7) return 'rgba(245, 158, 11, 0.8)';
+                            if (score >= 0.6) return 'rgba(249, 115, 22, 0.8)';
+                            return 'rgba(239, 68, 68, 0.8)';
+                        }),
+                        borderColor: comparables.map(comp => {
+                            const score = comp.score;
+                            if (score >= 0.9) return 'rgba(16, 185, 129, 1)';
+                            if (score >= 0.8) return 'rgba(59, 130, 246, 1)';
+                            if (score >= 0.7) return 'rgba(245, 158, 11, 1)';
+                            if (score >= 0.6) return 'rgba(249, 115, 22, 1)';
+                            return 'rgba(239, 68, 68, 1)';
+                        }),
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        borderSkipped: false,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: 'white',
+                            bodyColor: 'white',
+                            borderColor: 'rgba(255, 255, 255, 0.2)',
+                            borderWidth: 1,
+                            callbacks: {
+                                title: function(tooltipItems) {
+                                    const index = tooltipItems[0].dataIndex;
+                                    return comparables[index]?.property.address || '';
+                                },
+                                label: function(context) {
+                                    return `🎯 Score: ${context.parsed.y.toFixed(1)}%`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            grid: { color: 'rgba(0, 0, 0, 0.1)' },
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+
+            // Factors Chart (Radar chart for first property)
+            if (comparables.length > 0) {
+                const factorsCtx = document.getElementById('factors-chart').getContext('2d');
+                const firstComp = comparables[0];
+                factorsChart = new Chart(factorsCtx, {
+                    type: 'radar',
+                    data: {
+                        labels: Object.keys(firstComp.breakdown).map(factor => factor.replace('_', ' ').toUpperCase()),
+                        datasets: [{
+                            label: 'Top Match Factors',
+                            data: Object.values(firstComp.breakdown).map(score => score * 100),
+                            backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                            borderColor: 'rgba(59, 130, 246, 1)',
+                            pointBackgroundColor: 'rgba(59, 130, 246, 1)',
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: 'rgba(59, 130, 246, 1)',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            r: {
+                                beginAtZero: true,
+                                max: 100,
+                                ticks: {
+                                    callback: function(value) {
+                                        return value + '%';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Enhanced map rendering
+        function renderMap() {
+            const mapContainer = document.getElementById('map');
+            
+            if (map) {
+                map.remove();
+            }
+
+            const inputData = {
+                latitude: parseFloat(document.getElementById('latitude').value),
+                longitude: parseFloat(document.getElementById('longitude').value)
+            };
+
+            map = L.map('map').setView([inputData.latitude, inputData.longitude], 12);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            // Enhanced input property marker
+            const inputIcon = L.divIcon({
+                html: '<div style="background: linear-gradient(45deg, #3b82f6, #8b5cf6); width: 30px; height: 30px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 16px;">🎯</div>',
+                iconSize: [30, 30],
+                className: 'custom-div-icon'
+            });
+
+            L.marker([inputData.latitude, inputData.longitude], { icon: inputIcon })
+                .addTo(map)
+                .bindPopup(`
+                    <div class="text-sm p-2">
+                        <strong class="text-blue-600">🎯 Your Property</strong><br/>
+                        <div class="mt-2 space-y-1">
+                            <div>📐 <strong>${document.getElementById('square_feet').value}</strong> sq ft</div>
+                            <div>📅 Built in <strong>${document.getElementById('year_built').value}</strong></div>
+                            <div>🏙️ Zoning: <strong>${document.getElementById('zoning').value}</strong></div>
+                            <div>📍 ${inputData.latitude.toFixed(4)}, ${inputData.longitude.toFixed(4)}</div>
+                        </div>
+                    </div>
+                `);
+
+            // Enhanced comparable markers
+            comparables.forEach((comp, index) => {
+                if (comp.property.latitude && comp.property.longitude) {
+                    const color = comp.score >= 0.8 ? '#10b981' : comp.score >= 0.6 ? '#f59e0b' : '#ef4444';
+                    
+                    const compIcon = L.divIcon({
+                        html: `<div style="background: ${color}; width: 25px; height: 25px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 12px;">${index + 1}</div>`,
+                        iconSize: [25, 25],
+                        className: 'custom-div-icon'
+                    });
+
+                    L.marker([comp.property.latitude, comp.property.longitude], { icon: compIcon })
+                        .addTo(map)
+                        .bindPopup(`
+                            <div class="text-sm p-2">
+                                <strong class="text-gray-800">#${index + 1} ${comp.property.address}</strong><br/>
+                                <div class="mt-2 space-y-1">
+                                    <div>⭐ Score: <strong class="text-blue-600">${(comp.score * 100).toFixed(1)}%</strong></div>
+                                    <div>📐 <strong>${comp.property.square_feet?.toLocaleString() || 'N/A'}</strong> sq ft</div>
+                                    <div>📅 Built in <strong>${comp.property.year_built}</strong></div>
+                                    <div>🏙️ Zoning: <strong>${comp.property.zoning}</strong></div>
+                                </div>
+                            </div>
+                        `);
+                }
+            });
+        }
+
+        // Enhanced tab switching with animations
+        function switchTab(tabName) {
+            // Update tab buttons with smooth transitions
+            document.querySelectorAll('[id^="tab-"]').forEach(btn => {
+                btn.className = 'flex-1 flex items-center justify-center px-6 py-4 rounded-lg font-semibold transition-all duration-300 text-gray-600 hover:text-gray-800 hover:bg-gray-50';
+            });
+            document.getElementById(`tab-${tabName}`).className = 'flex-1 flex items-center justify-center px-6 py-4 rounded-lg font-semibold transition-all duration-300 bg-white text-blue-600 shadow-lg transform';
+
+            // Update content with fade effect
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.style.opacity = '0';
+                setTimeout(() => {
+                    content.classList.add('hidden');
+                }, 150);
+            });
+
+            setTimeout(() => {
+                document.getElementById(`content-${tabName}`).classList.remove('hidden');
+                setTimeout(() => {
+                    document.getElementById(`content-${tabName}`).style.opacity = '1';
+                }, 50);
+            }, 150);
+
+            // Render content based on tab with delay for smooth transition
+            setTimeout(() => {
+                if (tabName === 'charts') {
+                    renderCharts();
+                } else if (tabName === 'map') {
+                    renderMap();
+                }
+            }, 200);
+        }
+
+        // Enhanced form submission
+        document.getElementById('search-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!backendConnected) {
+                showError('🚫 Backend is not connected. Please ensure the FastAPI server is running on http://localhost:8000');
+                return;
+            }
+
+            const searchBtn = document.getElementById('search-btn');
+            const errorMessage = document.getElementById('error-message');
+            
+            // Show enhanced loading state
+            document.getElementById('empty-state').classList.add('hidden');
+            document.getElementById('results-container').classList.add('hidden');
+            document.getElementById('loading-state').classList.remove('hidden');
+            
+            searchBtn.disabled = true;
+            searchBtn.innerHTML = `
+                <span class="flex items-center justify-center">
+                    <div class="spinner mr-3"></div>
+                    <span>🔍 Searching for Comparables...</span>
+                </span>
+            `;
+            errorMessage.classList.add('hidden');
+
+            const propertyData = {
+                latitude: parseFloat(document.getElementById('latitude').value),
+                longitude: parseFloat(document.getElementById('longitude').value),
+                square_feet: parseInt(document.getElementById('square_feet').value),
+                year_built: parseInt(document.getElementById('year_built').value),
+                zoning: document.getElementById('zoning').value
+            };
+
+            try {
+                const response = await axios.post('http://localhost:8000/comparable', propertyData, { timeout: 30000 });
+                comparables = response.data;
+                
+                // Enhanced success state
+                setTimeout(() => {
+                    document.getElementById('loading-state').classList.add('hidden');
+                    document.getElementById('results-container').classList.remove('hidden');
+                    document.getElementById('results-count').textContent = `🎉 Found ${comparables.length} excellent matches • Ranked by AI similarity score`;
+                    document.getElementById('results-badge').textContent = `${comparables.length} Results Found`;
+                    
+                    renderOverview();
+                    switchTab('overview');
+                }, 500);
+                
+            } catch (error) {
+                setTimeout(() => {
+                    document.getElementById('loading-state').classList.add('hidden');
+                    document.getElementById('empty-state').classList.remove('hidden');
+                    showError(`🚨 API Error: ${error.response?.status || 'Network Issue'} - ${error.message}`);
+                }, 500);
+            } finally {
+                setTimeout(() => {
+                    searchBtn.disabled = false;
+                    searchBtn.innerHTML = `
+                        <span class="flex items-center justify-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            </svg>
+                            Find Comparable Properties
+                        </span>
+                    `;
+                }, 1000);
+            }
+        });
+
+        // Enhanced error display
+        function showError(message) {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.querySelector('p').textContent = message;
+            errorDiv.classList.remove('hidden');
+            errorDiv.style.animation = 'slideIn 0.5s ease-out';
+        }
+
+        // Tab event listeners
+        document.getElementById('tab-overview').addEventListener('click', () => switchTab('overview'));
+        document.getElementById('tab-charts').addEventListener('click', () => switchTab('charts'));
+        document.getElementById('tab-map').addEventListener('click', () => switchTab('map'));
+
+        // Initialize with enhanced startup
+        document.addEventListener('DOMContentLoaded', () => {
+            checkBackend();
+            setInterval(checkBackend, 30000);
+            
+            // Add some startup animations
+            document.querySelector('.container').style.animation = 'slideIn 0.8s ease-out';
+        });
+    </script>
+</body>
+</html>

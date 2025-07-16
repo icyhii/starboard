@@ -1,0 +1,709 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏭 Starboard Comparables - Property Analytics Platform</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.1rem;
+        }
+        
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 0.9rem;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e1e8ed;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            background: white;
+        }
+        
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 20px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(52, 152, 219, 0.3);
+        }
+        
+        .btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .results-section {
+            display: none;
+        }
+        
+        .results-section.show {
+            display: block;
+            animation: slideInUp 0.5s ease-out;
+        }
+        
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .comparable-card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid #3498db;
+            transition: transform 0.3s ease;
+        }
+        
+        .comparable-card:hover {
+            transform: translateX(10px);
+        }
+        
+        .score-badge {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+        
+        .score-excellent { background: linear-gradient(135deg, #27ae60, #2ecc71); }
+        .score-good { background: linear-gradient(135deg, #f39c12, #e67e22); }
+        .score-fair { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+        
+        .property-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .breakdown-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .breakdown-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .progress-bar {
+            width: 60px;
+            height: 6px;
+            background: #e1e8ed;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #2980b9);
+            transition: width 0.3s ease;
+        }
+        
+        .map-container {
+            height: 350px;
+            border-radius: 16px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+        
+        .chart-container {
+            height: 300px;
+            margin-top: 20px;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .icon {
+            width: 16px;
+            height: 16px;
+            margin-right: 5px;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 4px;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 12px 20px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .tab.active {
+            background: white;
+            color: #3498db;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 30px;
+            color: #7f8c8d;
+        }
+        
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1><i class="fas fa-industry"></i> Starboard Comparables</h1>
+            <p>Industrial Property Analytics Platform - Find the best comparable properties with AI-powered analysis</p>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="main-grid">
+            <!-- Input Panel -->
+            <div class="card">
+                <h3><i class="fas fa-search"></i> Property Search</h3>
+                <form id="propertyForm">
+                    <div class="form-group">
+                        <label><i class="fas fa-map-marker-alt"></i> Latitude</label>
+                        <input type="number" id="latitude" value="41.8781" step="0.000001" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label><i class="fas fa-map-marker-alt"></i> Longitude</label>
+                        <input type="number" id="longitude" value="-87.6298" step="0.000001" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label><i class="fas fa-ruler"></i> Square Feet</label>
+                        <input type="number" id="square_feet" value="5100" min="100" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label><i class="fas fa-calendar"></i> Year Built</label>
+                        <input type="number" id="year_built" value="1982" min="1800" max="2024" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label><i class="fas fa-building"></i> Zoning</label>
+                        <select id="zoning" required>
+                            <option value="M1">M1 - Manufacturing</option>
+                            <option value="M2">M2 - Manufacturing</option>
+                            <option value="M3">M3 - Manufacturing</option>
+                            <option value="I-1">I-1 - Industrial</option>
+                            <option value="I-2">I-2 - Industrial</option>
+                            <option value="C1">C1 - Commercial</option>
+                            <option value="C2">C2 - Commercial</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn" id="submitBtn">
+                        <span id="btnText">Find Comparable Properties</span>
+                        <span id="btnLoading" style="display: none;"><span class="loading"></span> Searching...</span>
+                    </button>
+                </form>
+                
+                <!-- Status -->
+                <div id="status" style="margin-top: 20px; text-align: center; color: #666;"></div>
+            </div>
+
+            <!-- Results Panel -->
+            <div class="card">
+                <div id="emptyState" class="empty-state">
+                    <i class="fas fa-industry"></i>
+                    <h3>Ready to Find Comparables</h3>
+                    <p>Enter property details to discover similar industrial properties with detailed scoring and analysis.</p>
+                </div>
+                
+                <div id="resultsSection" class="results-section">
+                    <!-- Results Header -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <div>
+                            <h3><i class="fas fa-chart-line"></i> Comparable Properties</h3>
+                            <p id="resultsCount" style="color: #666; margin-top: 5px;"></p>
+                        </div>
+                        <div id="resultsBadge" class="score-badge"></div>
+                    </div>
+                    
+                    <!-- Tabs -->
+                    <div class="tabs">
+                        <div class="tab active" onclick="showTab('overview')">Overview</div>
+                        <div class="tab" onclick="showTab('chart')">Charts</div>
+                        <div class="tab" onclick="showTab('map')">Map</div>
+                    </div>
+                    
+                    <!-- Tab Contents -->
+                    <div id="overview" class="tab-content active">
+                        <div id="comparablesList"></div>
+                    </div>
+                    
+                    <div id="chart" class="tab-content">
+                        <div class="chart-container">
+                            <canvas id="scoreChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div id="map" class="tab-content">
+                        <div id="mapContainer" class="map-container"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let map;
+        let scoreChart;
+        
+        // Form submission
+        document.getElementById('propertyForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const btnText = document.getElementById('btnText');
+            const btnLoading = document.getElementById('btnLoading');
+            const status = document.getElementById('status');
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            btnText.style.display = 'none';
+            btnLoading.style.display = 'inline-block';
+            status.textContent = 'Connecting to backend...';
+            
+            const formData = {
+                latitude: parseFloat(document.getElementById('latitude').value),
+                longitude: parseFloat(document.getElementById('longitude').value),
+                square_feet: parseInt(document.getElementById('square_feet').value),
+                year_built: parseInt(document.getElementById('year_built').value),
+                zoning: document.getElementById('zoning').value
+            };
+            
+            try {
+                status.textContent = 'Searching for comparables...';
+                const response = await fetch('http://localhost:8000/comparable', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const comparables = await response.json();
+                displayResults(formData, comparables);
+                status.textContent = `✅ Found ${comparables.length} comparable properties!`;
+                
+            } catch (error) {
+                console.error('Error:', error);
+                status.innerHTML = `❌ Error: ${error.message}<br><small>Make sure the backend server is running on http://localhost:8000</small>`;
+            } finally {
+                // Reset button state
+                submitBtn.disabled = false;
+                btnText.style.display = 'inline-block';
+                btnLoading.style.display = 'none';
+            }
+        });
+        
+        function displayResults(inputProperty, comparables) {
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('resultsSection').classList.add('show');
+            
+            // Update results header
+            document.getElementById('resultsCount').textContent = 
+                `Found ${comparables.length} matches • Ranked by similarity`;
+            document.getElementById('resultsBadge').textContent = `${comparables.length} Results`;
+            
+            // Display comparable cards
+            displayComparableCards(comparables);
+            
+            // Create charts
+            createScoreChart(comparables);
+            
+            // Create map
+            createMap(inputProperty, comparables);
+        }
+        
+        function displayComparableCards(comparables) {
+            const container = document.getElementById('comparablesList');
+            container.innerHTML = '';
+            
+            comparables.forEach((comp, index) => {
+                const score = comp.score * 100;
+                const scoreClass = score >= 80 ? 'score-excellent' : score >= 60 ? 'score-good' : 'score-fair';
+                const scoreLabel = score >= 90 ? 'Excellent Match' : score >= 80 ? 'Very Good' : score >= 60 ? 'Good Match' : 'Fair Match';
+                
+                const card = document.createElement('div');
+                card.className = 'comparable-card';
+                card.style.animationDelay = `${index * 0.1}s`;
+                
+                card.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+                        <div>
+                            <span class="score-badge ${scoreClass}">#${index + 1} - ${score.toFixed(1)}%</span>
+                            <div style="font-size: 0.8rem; color: #666; margin-top: 5px;">${scoreLabel}</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-weight: bold; font-size: 1.1rem;">${comp.property.address}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="property-details">
+                        <div class="detail-item">
+                            <i class="fas fa-ruler"></i>
+                            ${comp.property.square_feet?.toLocaleString() || 'N/A'} sq ft
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-calendar"></i>
+                            Built ${comp.property.year_built}
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-building"></i>
+                            ${comp.property.zoning}
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            ${comp.property.latitude?.toFixed(3)}, ${comp.property.longitude?.toFixed(3)}
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 15px;">
+                        <div style="font-size: 0.9rem; font-weight: 600; margin-bottom: 10px; color: #555;">Score Breakdown:</div>
+                        <div class="breakdown-grid">
+                            ${Object.entries(comp.breakdown).map(([factor, factorScore]) => `
+                                <div class="breakdown-item">
+                                    <span style="text-transform: capitalize;">${factor.replace('_', ' ')}</span>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: ${factorScore * 100}%"></div>
+                                        </div>
+                                        <span style="font-size: 0.8rem; font-weight: 600;">${(factorScore * 100).toFixed(0)}%</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(card);
+            });
+        }
+        
+        function createScoreChart(comparables) {
+            const ctx = document.getElementById('scoreChart').getContext('2d');
+            
+            // Destroy existing chart
+            if (scoreChart) {
+                scoreChart.destroy();
+            }
+            
+            const data = comparables.map((comp, index) => ({
+                label: `#${index + 1}`,
+                score: comp.score * 100,
+                address: comp.property.address.split(' ').slice(0, 3).join(' ')
+            }));
+            
+            scoreChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(d => d.label),
+                    datasets: [{
+                        label: 'Compatibility Score (%)',
+                        data: data.map(d => d.score),
+                        backgroundColor: data.map(d => 
+                            d.score >= 80 ? '#27ae60' : d.score >= 60 ? '#f39c12' : '#e74c3c'
+                        ),
+                        borderRadius: 8,
+                        borderSkipped: false,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                title: function(tooltipItems) {
+                                    const index = tooltipItems[0].dataIndex;
+                                    return data[index].address;
+                                },
+                                label: function(context) {
+                                    return `Score: ${context.parsed.y.toFixed(1)}%`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function createMap(inputProperty, comparables) {
+            const container = document.getElementById('mapContainer');
+            container.innerHTML = '';
+            
+            // Initialize map
+            map = L.map(container).setView([inputProperty.latitude, inputProperty.longitude], 13);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+            
+            // Input property marker (blue)
+            const inputIcon = L.divIcon({
+                html: '<div style="background: #3498db; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>',
+                className: 'custom-marker',
+                iconSize: [20, 20],
+                iconAnchor: [10, 10]
+            });
+            
+            L.marker([inputProperty.latitude, inputProperty.longitude], { icon: inputIcon })
+                .addTo(map)
+                .bindPopup(`
+                    <div style="font-family: system-ui; font-size: 14px;">
+                        <strong>🎯 Input Property</strong><br>
+                        📐 ${inputProperty.square_feet.toLocaleString()} sq ft<br>
+                        📅 Built ${inputProperty.year_built}<br>
+                        🏙️ ${inputProperty.zoning}
+                    </div>
+                `);
+            
+            // Comparable markers
+            const bounds = [[inputProperty.latitude, inputProperty.longitude]];
+            
+            comparables.forEach((comp, index) => {
+                if (comp.property.latitude && comp.property.longitude) {
+                    bounds.push([comp.property.latitude, comp.property.longitude]);
+                    
+                    const score = comp.score * 100;
+                    const color = score >= 80 ? '#27ae60' : score >= 60 ? '#f39c12' : '#e74c3c';
+                    
+                    const compIcon = L.divIcon({
+                        html: `<div style="background: ${color}; width: 16px; height: 16px; border-radius: 50%; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: white; font-size: 10px; font-weight: bold;">${index + 1}</div>`,
+                        className: 'custom-marker',
+                        iconSize: [16, 16],
+                        iconAnchor: [8, 8]
+                    });
+                    
+                    L.marker([comp.property.latitude, comp.property.longitude], { icon: compIcon })
+                        .addTo(map)
+                        .bindPopup(`
+                            <div style="font-family: system-ui; font-size: 14px;">
+                                <strong>#${index + 1} ${comp.property.address}</strong><br>
+                                ⭐ Score: ${score.toFixed(1)}%<br>
+                                📐 ${comp.property.square_feet?.toLocaleString() || 'N/A'} sq ft<br>
+                                📅 Built ${comp.property.year_built}<br>
+                                🏙️ ${comp.property.zoning}
+                            </div>
+                        `);
+                }
+            });
+            
+            // Fit map to show all markers
+            if (bounds.length > 1) {
+                map.fitBounds(bounds, { padding: [20, 20] });
+            }
+        }
+        
+        function showTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            
+            // Refresh map if map tab is shown
+            if (tabName === 'map' && map) {
+                setTimeout(() => map.invalidateSize(), 100);
+            }
+        }
+        
+        // Load initial status
+        window.addEventListener('load', async function() {
+            try {
+                const response = await fetch('http://localhost:8000/properties');
+                if (response.ok) {
+                    const properties = await response.json();
+                    document.getElementById('status').innerHTML = 
+                        `🟢 Backend connected • ${properties.length} properties available`;
+                } else {
+                    throw new Error('Backend not responding');
+                }
+            } catch (error) {
+                document.getElementById('status').innerHTML = 
+                    '🔴 Backend offline • Make sure FastAPI server is running on port 8000';
+            }
+        });
+    </script>
+</body>
+</html>
+    

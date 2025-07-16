@@ -51,7 +51,7 @@ def normalize_field(field_name: str) -> str:
         import openai
         openai.api_key = os.getenv("OPENAI_API_KEY")
         prompt = f"Normalize the field name '{field_name}' to a standard property schema field (e.g., square_feet, property_id, zoning, construction_year, address). Return only the normalized field name."
-        response = openai.ChatCompletion.create(
+        response = openai.ChatCompletion.create( # type: ignore
             model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": prompt}],
             max_tokens=10
