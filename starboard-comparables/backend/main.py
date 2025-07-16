@@ -12,7 +12,7 @@ app = FastAPI()
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=["*"],  # Allow all origins for deployment
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -32,6 +32,14 @@ class PropertyInput(BaseModel):
     square_feet: float
     year_built: int
     zoning: str
+
+@app.get("/")
+def read_root():
+    return {"message": "Starboard API is running", "status": "healthy"}
+
+@app.get("/health")
+def health_check():
+    return {"status": "healthy", "service": "starboard-api"}
 
 @app.get("/properties")
 def get_properties():
