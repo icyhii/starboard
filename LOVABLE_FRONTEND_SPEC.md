@@ -6,7 +6,11 @@ Create a modern, interactive web application for industrial property comparable 
 **IMPORTANT**: Replace `YOUR_VERCEL_URL` with your actual Vercel deployment URL after backend deployment.
 
 ## API Integration Setup
-**Base URL**: `https://YOUR_VERCEL_URL.vercel.app`
+**Base URL**: `https://starboard-dsqy90evu-kunal-singhs-projects-f14fa826.vercel.app`
+
+**⚠️ IMPORTANT**: The backend is currently deployed but may have authentication protection. If the frontend cannot access the API directly, you may need to:
+1. Make the Vercel deployment public in the project settings
+2. Or use the local backend URL during development: `http://localhost:8000`
 
 **Key Endpoints**:
 - `GET /health` - Health check
@@ -15,7 +19,7 @@ Create a modern, interactive web application for industrial property comparable 
 
 **Sample API Call**:
 ```javascript
-fetch('https://YOUR_VERCEL_URL.vercel.app/comparable', {
+fetch('https://starboard-dsqy90evu-kunal-singhs-projects-f14fa826.vercel.app/comparable', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
@@ -125,7 +129,7 @@ Each card shows:
 ## Technical Integration
 
 ### API Integration
-**Base URL**: `YOUR_VERCEL_DEPLOYMENT_URL` (to be provided after deployment)
+**Base URL**: `https://starboard-dsqy90evu-kunal-singhs-projects-f14fa826.vercel.app`
 
 **Endpoints:**
 1. **Health Check**: `GET /health`
@@ -135,7 +139,7 @@ Each card shows:
 ```javascript
 const findComparables = async (propertyData) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/comparable?n=5`, {
+    const response = await fetch(`https://starboard-dsqy90evu-kunal-singhs-projects-f14fa826.vercel.app/comparable?n=5`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
