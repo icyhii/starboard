@@ -25,5 +25,23 @@
     "zoning": "I-1",
     "latitude": 41.8790,
     "longitude": -87.6295
+  },
+  {
+    "id": "101",
+    "address": "101 Mixed Development Center",
+    "square_feet": 5000,
+    "year_built": 1980,
+    "zoning": "Mixed-Use",
+    "latitude": 41.8775,
+    "longitude": -87.6305
+  },
+  {
+    "id": "202",
+    "address": "202 Industrial Park Way",
+    "square_feet": 5300,
+    "year_built": 1983,
+    "zoning": "MU",
+    "latitude": 41.8788,
+    "longitude": -87.6290
   }
 ]

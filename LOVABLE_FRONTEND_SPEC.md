@@ -6,11 +6,18 @@ Create a modern, interactive web application for industrial property comparable 
 **IMPORTANT**: Replace `YOUR_VERCEL_URL` with your actual Vercel deployment URL after backend deployment.
 
 ## API Integration Setup
-**Base URL**: `https://starboard-dsqy90evu-kunal-singhs-projects-f14fa826.vercel.app`
+**Base URL**: `https://starboard-gj5ao13w6-kunal-singhs-projects-f14fa826.vercel.app`
 
-**⚠️ IMPORTANT**: The backend is currently deployed but may have authentication protection. If the frontend cannot access the API directly, you may need to:
-1. Make the Vercel deployment public in the project settings
-2. Or use the local backend URL during development: `http://localhost:8000`
+**✅ FIXED**: The scoring algorithm has been corrected to:
+1. Return positive scores between 0.0 and 1.0
+2. Handle zoning compatibility (Mixed-Use works with Industrial zones)
+3. Provide realistic match percentages
+
+**🔥 CRITICAL - Score Display Fix**: 
+The API returns decimal scores (0.96 = 96%). Convert to percentage like this:
+```javascript
+const displayScore = Math.round(score * 100) + '%'; // 0.96 becomes "96%"
+```
 
 **Key Endpoints**:
 - `GET /health` - Health check
@@ -19,17 +26,42 @@ Create a modern, interactive web application for industrial property comparable 
 
 **Sample API Call**:
 ```javascript
-fetch('https://starboard-dsqy90evu-kunal-singhs-projects-f14fa826.vercel.app/comparable', {
+fetch('https://starboard-gj5ao13w6-kunal-singhs-projects-f14fa826.vercel.app/comparable', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
-    latitude: 34.0522,
-    longitude: -118.2437,
-    square_feet: 25000,
-    year_built: 2010,
-    zoning: "M1"
+    latitude: 41.8781,
+    longitude: -87.6298,
+    square_feet: 5100,
+    year_built: 1982,
+    zoning: "Mixed-Use"
   })
 })
+```
+
+**Fixed Response Format (scores now properly 0.0-1.0)**:
+```json
+[
+  {
+    "id": "123",
+    "score": 0.96,
+    "breakdown": {
+      "location": 1.0,
+      "size": 1.0,
+      "year_built": 1.0,
+      "zoning": 0.6
+    },
+    "property": {
+      "id": "123",
+      "address": "123 Industrial Ave",
+      "square_feet": 5100,
+      "year_built": 1982,
+      "zoning": "M1",
+      "latitude": 41.8781,
+      "longitude": -87.6298
+    }
+  }
+]
 ```
 
 ## Design Requirements
