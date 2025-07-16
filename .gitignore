@@ -2,3 +2,4 @@
 .env
 starboard-comparables/.env
 node_modules
+.next/
