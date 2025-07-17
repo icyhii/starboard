@@ -1,4 +1,36 @@
-# Ignore environment files
+# Environment files
 .env
+.env.local
+.env.production
 starboard-comparables/.env
-node_modules
+
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+data/logs/
+
+# Cache
+.pytest_cache/
+.coverage
+*.egg-info/
+
+# Build
+dist/
+build/

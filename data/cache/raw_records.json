@@ -1,0 +1,52 @@
+[
+  {
+    "id": "1001",
+    "address": "123 Industrial Ave, Chicago, IL",
+    "latitude": 41.8781,
+    "longitude": -87.6298,
+    "square_feet": 50000,
+    "year_built": 1995,
+    "zoning": "M1",
+    "property_type": "Industrial"
+  },
+  {
+    "id": "1002",
+    "address": "456 Manufacturing Blvd, Chicago, IL",
+    "latitude": 41.8825,
+    "longitude": -87.623,
+    "square_feet": 75000,
+    "year_built": 2005,
+    "zoning": "M2",
+    "property_type": "Industrial"
+  },
+  {
+    "id": "1003",
+    "address": "789 Factory St, Chicago, IL",
+    "latitude": 41.8711,
+    "longitude": -87.635,
+    "square_feet": 35000,
+    "year_built": 1988,
+    "zoning": "I-1",
+    "property_type": "Industrial"
+  },
+  {
+    "id": "1004",
+    "address": "321 Warehouse Way, Chicago, IL",
+    "latitude": 41.865,
+    "longitude": -87.618,
+    "square_feet": 120000,
+    "year_built": 2010,
+    "zoning": "I-2",
+    "property_type": "Industrial"
+  },
+  {
+    "id": "1005",
+    "address": "654 Distribution Dr, Chicago, IL",
+    "latitude": 41.859,
+    "longitude": -87.642,
+    "square_feet": 85000,
+    "year_built": 1992,
+    "zoning": "M1",
+    "property_type": "Industrial"
+  }
+]
